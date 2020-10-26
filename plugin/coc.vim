@@ -267,7 +267,7 @@ function! s:Enable(initialize)
         autocmd WinClosed       * call coc#float#nvim_close_related(+expand('<afile>'))
       endif
     endif
-    autocmd WinLeave            * call coc#util#clear_highlights()
+    autocmd WinLeave            * call coc#highlight#clear_highlights()
     autocmd WinLeave            * call s:Autocmd('WinLeave', win_getid())
     autocmd WinEnter            * call s:Autocmd('WinEnter', win_getid())
     autocmd BufWinLeave         * call s:Autocmd('BufWinLeave', +expand('<abuf>'), bufwinid(+expand('<abuf>')))

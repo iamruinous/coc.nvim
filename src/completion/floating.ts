@@ -25,7 +25,7 @@ export default class Floating {
   private config: FloatingConfig
 
   constructor() {
-    this.floatBuffer = new FloatBuffer(workspace.nvim)
+    this.floatBuffer = new FloatBuffer(workspace.nvim, workspace.isVim)
     let configuration = workspace.getConfiguration('suggest')
     let enableFloat = configuration.get<boolean>('floatEnable', true)
     let { env } = workspace
@@ -48,7 +48,7 @@ export default class Floating {
     let { nvim } = workspace
     let config = this.calculateBounding(docs, bounding)
     if (!config || token.isCancellationRequested) return
-    await this.floatBuffer.setDocuments(docs, config.width)
+    this.floatBuffer.setDocuments(docs, config.width)
     if (token.isCancellationRequested) return
     nvim.pauseNotification()
     nvim.call('coc#util#pumvisible', [], true)
@@ -65,7 +65,7 @@ export default class Floating {
     nvim.call('coc#util#pumvisible', [], true)
     if (workspace.isNvim) {
       nvim.call('coc#util#win_gotoid', [winid], true)
-      this.floatBuffer.setLines(bufnr)
+      this.floatBuffer.setLines(bufnr, winid)
       nvim.command('noa normal! gg0', true)
       nvim.call('coc#float#nvim_scrollbar', [winid], true)
       nvim.command('noa wincmd p', true)

@@ -61,7 +61,7 @@ export default class FloatFactory extends EventEmitter implements Disposable {
     private autoHide = true) {
     super()
     this.mutex = new Mutex()
-    this.floatBuffer = new FloatBuffer(nvim)
+    this.floatBuffer = new FloatBuffer(nvim, env.isVim)
     events.on('BufEnter', bufnr => {
       if (bufnr == this._bufnr
         || bufnr == this.targetBufnr) return
@@ -154,7 +154,8 @@ export default class FloatFactory extends EventEmitter implements Disposable {
     let tokenSource = this.tokenSource = new CancellationTokenSource()
     let token = tokenSource.token
     let { nvim, floatBuffer } = this
-    let lines = FloatBuffer.getLines(docs, !this.env.isVim)
+    docs = docs.filter(o => o.content.trim().length > 0)
+    let lines = getLines(docs)
     let floatConfig: any = {
       allowSelection: opts.allowSelection || false,
       pumAlignTop: this.pumAlignTop,
@@ -182,7 +183,7 @@ export default class FloatFactory extends EventEmitter implements Disposable {
     this.targetBufnr = targetBufnr
     this.cursor = cursor
     // calculat highlights
-    await floatBuffer.setDocuments(docs, config.width)
+    floatBuffer.setDocuments(docs, config.width)
     if (token.isCancellationRequested) return
     if (mode == 's') nvim.call('feedkeys', ['\x1b', "in"], true)
     // create window
@@ -195,7 +196,7 @@ export default class FloatFactory extends EventEmitter implements Disposable {
     nvim.pauseNotification()
     if (!this.env.isVim) {
       nvim.call('coc#util#win_gotoid', [winid], true)
-      this.floatBuffer.setLines(bufnr)
+      this.floatBuffer.setLines(bufnr, winid)
       nvim.command(`noa normal! gg0`, true)
       nvim.call('coc#float#nvim_scrollbar', [winid], true)
       nvim.command('noa wincmd p', true)
@@ -264,4 +265,16 @@ export default class FloatFactory extends EventEmitter implements Disposable {
     if (!this.winid) return false
     return await this.nvim.call('coc#float#valid', [this.winid]) != 0
   }
+}
+
+function getLines(docs: Documentation[]): string[] {
+  let res: string[] = []
+  for (let i = 0; i < docs.length; i++) {
+    let doc = docs[i]
+    res.push(...doc.content.split(/\r?\n/))
+    if (i != docs.length - 1) {
+      res.push(' ')
+    }
+  }
+  return res
 }
